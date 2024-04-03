@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../include/libfacom.h"
 #define SEED 0x12345678
 
@@ -59,11 +60,42 @@ void deletar_hash(thash *hash) {
     free(hash->vetor);
 }
 
+/* lógica do buscar: primeiro, verifique na posição que a struct normalmente estaria se nenhum elemento tivesse ocupado o espaço dela. 
+    se achar, retorne a struct, senão, continue procurando até achar ou até chegar em um lugar vazio
+*/
 void * buscar(thash hash, const char *chave) {
+    uint32_t hashNum = hasher(chave, SEED);
+    int pos = hashNum % (hash.tamanho_max);
 
+    while(hash.vetor[pos] != 0) {
+        void *bucket = (void *) hash.vetor[pos];
+
+        if(strcmp(chave, hash.pegar_chave(bucket)) == 0) {
+            return (void *) hash.vetor[pos];
+        }
+
+        pos = (pos + 1) % hash.tamanho_max;
+    }
+
+    return NULL;
 }
 
+// lógica: busque. Se achar, mude pro deleted e diminua a quantidade de elementos
 int remover(thash *hash, const char *chave) {
+    uint32_t hashNum = hasher(chave, SEED);
+    int pos = hashNum % hash->tamanho_max;
 
+    while(hash->vetor[pos] != 0) {
+        void *bucket = (void *) hash->vetor[pos];
+
+        if(strcmp(chave, hash->pegar_chave(bucket)) == 0) {
+            hash->vetor[pos] = hash->apagado;
+            hash->qtde_elementos--;
+            return EXIT_SUCCESS;
+        }
+
+        pos = (pos + 1) % hash->tamanho_max;
+    }
+
+    return EXIT_FAILURE;
 }
-
