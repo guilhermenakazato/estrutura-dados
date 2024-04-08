@@ -22,14 +22,14 @@ int inserir(thash *hash, void *bucket) {
     if(hash->qtde_elementos + 1 == hash->tamanho_max) {
         free(bucket);
         return EXIT_FAILURE;
-    } else {
-        while(hash->vetor[pos] != 0 || hash->vetor[pos] == hash->apagado) {
-            pos = (pos + 1) % hash->tamanho_max;
-        }
-
-        hash->vetor[pos] = (uintptr_t) bucket;
-        hash->qtde_elementos += 1;
     }
+
+    while(hash->vetor[pos] != 0 || hash->vetor[pos] == hash->apagado) {
+        pos = (pos + 1) % hash->tamanho_max;
+    }
+
+    hash->vetor[pos] = (uintptr_t) bucket;
+    hash->qtde_elementos += 1;
 
     return EXIT_SUCCESS;
 }
@@ -62,6 +62,8 @@ void deletar_hash(thash *hash) {
 
 /* lógica do buscar: primeiro, verifique na posição que a struct normalmente estaria se nenhum elemento tivesse ocupado o espaço dela. 
     se achar, retorne a struct, senão, continue procurando até achar ou até chegar em um lugar vazio
+
+    é mais otimizado usar ponteiro, porém o uso por cópia garante que não importa o que você faça na função, não vai bagunçar a hash
 */
 void * buscar(thash hash, const char *chave) {
     uint32_t hashNum = hasher(chave, SEED);
@@ -89,6 +91,7 @@ int remover(thash *hash, const char *chave) {
         void *bucket = (void *) hash->vetor[pos];
 
         if(strcmp(chave, hash->pegar_chave(bucket)) == 0) {
+            free(bucket);
             hash->vetor[pos] = hash->apagado;
             hash->qtde_elementos--;
             return EXIT_SUCCESS;
